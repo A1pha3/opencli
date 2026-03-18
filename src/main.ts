@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { discoverClis, executeCommand } from './engine.js';
-import { type CliCommand, fullName, getRegistry, strategyLabel } from './registry.js';
+import { Strategy, type CliCommand, fullName, getRegistry, strategyLabel } from './registry.js';
 import { render as renderOutput } from './output.js';
 import { PlaywrightMCP } from './browser/index.js';
 import { browserSession, DEFAULT_BROWSER_COMMAND_TIMEOUT, runWithTimeout } from './runtime.js';
@@ -209,7 +209,15 @@ for (const [, cmd] of registry) {
       if (actionOpts.verbose) process.env.OPENCLI_VERBOSE = '1';
       let result: any;
       if (cmd.browser) {
-        result = await browserSession(PlaywrightMCP, async (page) => runWithTimeout(executeCommand(cmd, page, kwargs, actionOpts.verbose), { timeout: cmd.timeoutSeconds ?? DEFAULT_BROWSER_COMMAND_TIMEOUT, label: fullName(cmd) }));
+        result = await browserSession(PlaywrightMCP, async (page) => {
+          // Cookie/header strategies require same-origin context for credentialed fetch.
+          // In CDP mode the active tab may be on an unrelated domain, causing CORS failures.
+          // Navigate to the command's domain first (mirrors cascade command behavior).
+          if ((cmd.strategy === Strategy.COOKIE || cmd.strategy === Strategy.HEADER) && cmd.domain) {
+            try { await page.goto(`https://${cmd.domain}`); await page.wait(2); } catch {}
+          }
+          return runWithTimeout(executeCommand(cmd, page, kwargs, actionOpts.verbose), { timeout: cmd.timeoutSeconds ?? DEFAULT_BROWSER_COMMAND_TIMEOUT, label: fullName(cmd) });
+        });
       } else { result = await executeCommand(cmd, null, kwargs, actionOpts.verbose); }
       if (actionOpts.verbose && (!result || (Array.isArray(result) && result.length === 0))) {
         console.error(chalk.yellow(`[Verbose] Warning: Command returned an empty result. If the website structural API changed or requires authentication, check the network or update the adapter.`));
