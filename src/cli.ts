@@ -18,10 +18,13 @@ import { registerAllCommands } from './commanderAdapter.js';
 
 export function runCli(BUILTIN_CLIS: string, USER_CLIS: string): void {
   const program = new Command();
+  // enablePositionalOptions: prevents parent from consuming flags meant for subcommands;
+  // prerequisite for passThroughOptions to forward --help/--version to external binaries
   program
     .name('opencli')
     .description('Make any website your CLI. Zero setup. AI-powered.')
-    .version(PKG_VERSION);
+    .version(PKG_VERSION)
+    .enablePositionalOptions();
 
   // ── Built-in: list ────────────────────────────────────────────────────────
 
@@ -257,9 +260,11 @@ export function runCli(BUILTIN_CLIS: string, USER_CLIS: string): void {
       registerExternalCli(name, { binary: opts.binary, install: opts.install, description: opts.desc });
     });
 
-  function passthroughExternal(name: string) {
-    const idx = process.argv.indexOf(name);
-    const args = process.argv.slice(idx + 1);
+  function passthroughExternal(name: string, parsedArgs?: string[]) {
+    const args = parsedArgs ?? (() => {
+      const idx = process.argv.indexOf(name);
+      return process.argv.slice(idx + 1);
+    })();
     try {
       executeExternalCli(name, args, externalClis);
     } catch (err: any) {
@@ -273,9 +278,11 @@ export function runCli(BUILTIN_CLIS: string, USER_CLIS: string): void {
     program
       .command(ext.name)
       .description(`(External) ${ext.description || ext.name}`)
+      .argument('[args...]')
       .allowUnknownOption()
-      .allowExcessArguments()
-      .action(() => passthroughExternal(ext.name));
+      .passThroughOptions()
+      .helpOption(false)
+      .action((args: string[]) => passthroughExternal(ext.name, args));
   }
 
   // ── Antigravity serve (long-running, special case) ────────────────────────
