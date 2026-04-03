@@ -364,9 +364,9 @@ opencli plugin uninstall my-tool                            # 卸载
 
 如果你是一个被要求查阅代码并编写新 `opencli` 适配器的 AI，请遵守以下工作流。
 
-> **快速模式**：只想为某个页面快速生成一个命令？看 [CLI-ONESHOT.md](./CLI-ONESHOT.md) — 给一个 URL + 一句话描述，4 步搞定。
+> **快速模式**：只想为某个页面快速生成一个命令？看 [opencli-oneshot skill](./skills/opencli-oneshot/SKILL.md) — 给一个 URL + 一句话描述，4 步搞定。
 
-> **完整模式**：在编写任何新代码前，先阅读 [CLI-EXPLORER.md](./CLI-EXPLORER.md)。它包含完整的适配器探索开发指南、API 探测流程、5级认证策略以及常见陷阱。
+> **完整模式**：在编写任何新代码前，先阅读 [opencli-explorer skill](./skills/opencli-explorer/SKILL.md)。它包含完整的适配器探索开发指南、API 探测流程、5级认证策略以及常见陷阱。
 
 ```bash
 # 1. Deep Explore — 网络拦截 → 响应分析 → 能力推理 → 框架检测

@@ -109,7 +109,7 @@ cli({
 });
 ```
 
-Use `opencli explore <url>` to discover APIs and see [CLI-EXPLORER.md](./CLI-EXPLORER.md) if you need the full adapter workflow.
+Use `opencli explore <url>` to discover APIs and see [opencli-explorer skill](./skills/opencli-explorer/SKILL.md) if you need the full adapter workflow.
 
 ### Validate Your Adapter
 

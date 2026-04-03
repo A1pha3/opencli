@@ -10,7 +10,7 @@ tags: [opencli, adapter, browser, api-discovery, cli, web-scraping, automation]
 > 从零到发布，覆盖 API 发现、方案选择、适配器编写、测试验证全流程。
 
 > [!TIP]
-> **只想为一个具体页面快速生成一个命令？** 看 [CLI-ONESHOT.md](./CLI-ONESHOT.md)（~150 行，4 步搞定）。
+> **只想为一个具体页面快速生成一个命令？** 看 [opencli-oneshot skill](../opencli-oneshot/SKILL.md)（~150 行，4 步搞定）。
 > 本文档适合从零探索一个新站点的完整流程。
 
 ---
