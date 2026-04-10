@@ -3,7 +3,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { cli, getRegistry, Strategy } from './registry.js';
-import { loadTsManifestEntries, shouldReplaceManifestEntry } from './build-manifest.js';
+import { loadTsManifestEntries, resolveManifestImportFilePath, shouldReplaceManifestEntry } from './build-manifest.js';
 
 describe('manifest helper rules', () => {
   const tempDirs: string[] = [];
@@ -67,6 +67,19 @@ describe('manifest helper rules', () => {
     fs.writeFileSync(file, `export function helper() { return 'noop'; }`);
 
     return expect(loadTsManifestEntries(file, 'demo', async () => ({}))).resolves.toEqual([]);
+  });
+
+  it('prefers compiled dist modules for manifest imports when available', () => {
+    const packageRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'opencli-manifest-root-'));
+    tempDirs.push(packageRoot);
+    const sourceFile = path.join(packageRoot, 'clis', 'zhihu', 'publish.ts');
+    const compiledFile = path.join(packageRoot, 'dist', 'clis', 'zhihu', 'publish.js');
+    fs.mkdirSync(path.dirname(sourceFile), { recursive: true });
+    fs.mkdirSync(path.dirname(compiledFile), { recursive: true });
+    fs.writeFileSync(sourceFile, 'export {};');
+    fs.writeFileSync(compiledFile, 'export {};');
+
+    expect(resolveManifestImportFilePath(sourceFile, { packageRoot })).toBe(compiledFile);
   });
 
   it('builds TS manifest entries from exported runtime commands', async () => {

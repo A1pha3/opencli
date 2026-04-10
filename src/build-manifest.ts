@@ -78,6 +78,26 @@ function toTsModulePath(filePath: string, site: string): string {
   return `${site}/${baseName}.js`;
 }
 
+export function resolveManifestImportFilePath(
+  filePath: string,
+  opts: {
+    packageRoot?: string;
+    fileExists?: (candidate: string) => boolean;
+  } = {},
+): string {
+  if (!filePath.endsWith('.ts')) return filePath;
+
+  const packageRoot = opts.packageRoot ?? PACKAGE_ROOT;
+  const fileExists = opts.fileExists ?? fs.existsSync;
+  const relativePath = path.relative(packageRoot, filePath);
+  if (!relativePath || relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+    return filePath;
+  }
+
+  const compiledPath = path.join(packageRoot, 'dist', relativePath).replace(/\.ts$/, '.js');
+  return fileExists(compiledPath) ? compiledPath : filePath;
+}
+
 function isCliCommandValue(value: unknown, site: string): value is CliCommand {
   return isRecord(value)
     && typeof value.site === 'string'
@@ -160,7 +180,8 @@ export async function loadTsManifestEntries(
     const modulePath = toTsModulePath(filePath, site);
     const registry = getRegistry();
     const before = new Map(registry.entries());
-    const mod = await importer(pathToFileURL(filePath).href);
+    const importFilePath = resolveManifestImportFilePath(filePath, { packageRoot: PACKAGE_ROOT });
+    const mod = await importer(pathToFileURL(importFilePath).href);
 
     const exportedCommands = Object.values(isRecord(mod) ? mod : {})
       .filter(value => isCliCommandValue(value, site));

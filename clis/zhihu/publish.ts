@@ -94,7 +94,7 @@ cli({
         document.execCommand('insertText', false, value);
         node.dispatchEvent(new InputEvent('input', { bubbles: true, data: value, inputType: 'insertText' }));
       };
-      const normalize = (value) => String(value || '').replace(/\r\n/g, '\n').replace(/\u00a0/g, ' ').trim();
+      const normalize = (value) => String(value || '').replace(/\\r\\n/g, '\\n').replace(/\\u00a0/g, ' ').trim();
       const titleNode = Array.from(document.querySelectorAll(titleSelector)).find(isVisible);
       const bodyNode = Array.from(document.querySelectorAll(bodySelector)).find((node) => isVisible(node) && !node.closest('.WriteIndex-titleInput'));
       if (!titleNode || !bodyNode) return { titleMatches: false, bodyMatches: false, titleValue: '', bodyValue: '' };
@@ -118,7 +118,7 @@ cli({
       const expectedTitle = ${JSON.stringify(title)};
       const expectedBody = ${JSON.stringify(payload)};
       const expectedAuthor = ${JSON.stringify(authorIdentity)};
-      const normalize = (value) => String(value || '').replace(/\r\n/g, '\n').replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
+      const normalize = (value) => String(value || '').replace(/\\r\\n/g, '\\n').replace(/\\u00a0/g, ' ').replace(/\\s+/g, ' ').trim();
       const isVisible = (node) => {
         if (!node) return false;
         const rect = node.getBoundingClientRect();
@@ -132,10 +132,10 @@ cli({
         const link = Array.from(document.querySelectorAll('a[href^="/people/"], a[href*="www.zhihu.com/people/"]')).find((node) => {
           const text = (node.textContent || '').trim();
           const href = node.getAttribute('href') || '';
-          return /people\//.test(href) && (!text || text.length < 80);
+          return /people\\//.test(href) && (!text || text.length < 80);
         });
         const href = link?.getAttribute('href') || '';
-        const match = href.match(/\/people\/([A-Za-z0-9_-]+)/);
+        const match = href.match(/\\/people\\/([A-Za-z0-9_-]+)/);
         return match ? match[1] : null;
       };
       const publishButton = findPublishButton();
@@ -149,9 +149,9 @@ cli({
       }
       await new Promise((resolve) => setTimeout(resolve, 1800));
       const currentUrl = location.href;
-      const directMatch = currentUrl.match(/zhuanlan\.zhihu\.com\/p\/(\d+)/);
+      const directMatch = currentUrl.match(/zhuanlan\\.zhihu\\.com\\/p\\/(\\d+)/);
       const linkedArticle = Array.from(document.querySelectorAll('a[href*="zhuanlan.zhihu.com/p/"]')).map((node) => node.getAttribute('href') || '').find(Boolean) || null;
-      const linkedMatch = linkedArticle ? linkedArticle.match(/zhuanlan\.zhihu\.com\/p\/(\d+)/) : null;
+      const linkedMatch = linkedArticle ? linkedArticle.match(/zhuanlan\\.zhihu\\.com\\/p\\/(\\d+)/) : null;
       const articleId = directMatch?.[1] || linkedMatch?.[1] || null;
       const titleNode = document.querySelector('.Post-Title, h1.ContentItem-title, .ArticleTitle, h1');
       const bodyNode = document.querySelector('.Post-RichTextContainer, .RichText, .ArticleContent, [itemprop="articleBody"]');
