@@ -43,6 +43,101 @@ npm run build
 # 4. build-manifest → 扫描适配器生成 cli-manifest.json
 ```
 
+### 本地运行与开发调试
+
+很多新贡献者卡住的点，不是“怎么写代码”，而是不清楚“改完之后到底该怎么跑”。在这个仓库里，推荐把运行方式分成三类理解。
+
+#### 1. 开发模式：直接运行源码
+
+最适合日常开发，改完即可验证，不需要先构建。
+
+```bash
+# 查看帮助
+npm run dev -- --help
+
+# 运行公开命令
+npm run dev -- hackernews top --limit 5
+
+# 运行需要浏览器的命令
+npm run dev -- bilibili feed
+```
+
+适用场景：
+
+- 修改了 `src/` 下核心逻辑
+- 修改了 `clis/` 下 TypeScript 适配器
+- 修改了 YAML 适配器，想快速确认行为
+- 需要频繁反复调试
+
+#### 2. 产物模式：运行构建后的 dist
+
+适合验证“构建产物是否能工作”，尤其是在提交前。
+
+```bash
+# 先构建
+npm run build
+
+# 通过 package.json 脚本运行
+npm start -- --help
+npm start -- hackernews top --limit 5
+
+# 或直接执行入口
+node dist/src/main.js --help
+node dist/src/main.js hackernews top --limit 5
+```
+
+适用场景：
+
+- 想确认 `dist/` 产物没有问题
+- 排查某个问题是不是只在编译后出现
+- 提交前做一次接近真实发布环境的验证
+
+#### 3. 链接模式：将本地仓库暴露为 opencli 命令
+
+如果你希望像正式安装那样直接输入 `opencli`，可以用：
+
+```bash
+npm link
+
+opencli --help
+opencli hackernews top --limit 5
+```
+
+这适合长期参与开发，但要注意：
+
+- `opencli` 指向的是你当前仓库的构建产物
+- 如果你修改了需要进入 `dist/` 的代码，通常要重新执行 `npm run build`
+- 如果你只是想快速验证逻辑，`npm run dev -- ...` 往往更省事
+
+### 新手推荐工作流
+
+如果你第一次为项目做改动，按这条路径最稳妥：
+
+```bash
+# 1. 安装依赖
+npm install
+
+# 2. 先确认源码入口能跑
+npm run dev -- --help
+
+# 3. 修改代码后用开发模式验证
+npm run dev -- <site> <command> [args...]
+
+# 4. 提交前做类型检查和构建验证
+npm run typecheck
+npm run build
+
+# 5. 如有对应测试，再跑测试
+npm test
+npm run test:adapter
+```
+
+一句话判断：
+
+- 平时开发看效果，用 `npm run dev -- ...`
+- 提交前验产物，用 `npm run build` 和 `npm start -- ...`
+- 想把本地仓库当全局命令用，再执行 `npm link`
+
 ## 添加新适配器
 
 这是最常见的贡献类型。优先使用 YAML，只在需要时使用 TypeScript。
@@ -131,6 +226,9 @@ cli({
 ```bash
 # 编译
 npm run build
+
+# 开发模式直接运行源码（推荐先用这个）
+npm run dev -- <site> <command> --limit 3 --format json
 
 # 测试命令
 opencli <site> <command> --limit 3 --format json
@@ -275,11 +373,22 @@ opencli validate           # YAML 验证
 ## 常用开发命令
 
 ```bash
+# 开发模式运行源码
+npm run dev -- --help
+npm run dev -- hackernews top --limit 5
+
 # 编译
 npm run build
 
+# 运行构建产物
+npm start -- --help
+npm start -- hackernews top --limit 5
+
 # 类型检查（不编译）
 npx tsc --noEmit
+
+# 或使用 package.json 脚本
+npm run typecheck
 
 # 运行测试
 npm test

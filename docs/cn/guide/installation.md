@@ -54,6 +54,41 @@ npm link
 
 编译完成后，`opencli` 命令指向本地源码，修改源码后运行 `npm run build` 即可生效。
 
+如果你暂时不想全局链接，也可以直接在仓库里运行：
+
+```bash
+# 开发模式：直接跑源码
+npm run dev -- --help
+npm run dev -- hackernews top --limit 5
+
+# 产物模式：运行 dist 中的构建结果
+npm start -- --help
+npm start -- hackernews top --limit 5
+```
+
+这三种方式的区别：
+
+| 方式 | 适用场景 | 是否需要先 `npm run build` |
+|------|------|---------------------------|
+| `npm run dev -- ...` | 开发、调试、快速验证改动 | 否 |
+| `npm start -- ...` | 验证构建产物、模拟发布后运行 | 是 |
+| `opencli ...` + `npm link` | 想直接像全局命令一样使用本地仓库 | 通常是 |
+
+### 方式四：从源码仓库本地使用但不全局链接
+
+如果你只是临时在当前仓库里试用，不想污染全局环境，推荐直接使用脚本：
+
+```bash
+# 开发模式
+npm run dev -- hackernews top --limit 5
+
+# 构建后运行
+npm run build
+npm start -- hackernews top --limit 5
+```
+
+这对新手更安全，因为不会修改系统里的全局命令指向。
+
 **编译过程**：
 
 ```bash
@@ -178,6 +213,23 @@ opencli bilibili hot --limit 3
 # 输入 opencli 后按 Tab，应显示所有可用站点
 ```
 
+如果你是从源码仓库运行，可以使用这一组更贴近开发的验证命令：
+
+```bash
+# 1. 验证源码入口
+npm run dev -- --help
+
+# 2. 验证公开命令
+npm run dev -- hackernews top --limit 3
+
+# 3. 验证构建产物
+npm run build
+npm start -- hackernews top --limit 3
+
+# 4. 如果已经 npm link，再验证全局命令
+opencli --help
+```
+
 ## 常见安装问题
 
 ### `command not found: opencli`
@@ -242,6 +294,14 @@ rm -rf node_modules package-lock.json
 npm install
 npm run build
 ```
+
+### 不确定该运行 `npm run dev`、`npm start` 还是 `opencli`
+
+可以直接按下面判断：
+
+1. 你在开发仓库里改代码，想立刻验证：用 `npm run dev -- ...`
+2. 你想确认构建后的 `dist/` 是否能正常运行：用 `npm start -- ...`
+3. 你已经执行了 `npm link`，想像普通全局命令那样使用：用 `opencli ...`
 
 ## 关联文档
 
