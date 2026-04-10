@@ -206,6 +206,33 @@ opencli twitter download elonmusk --limit 20 --output ./twitter
 opencli 1688 download 841141931191 --output ./1688-downloads
 ```
 
+## Zhihu Column Publish
+
+Zhihu now supports plain-text column publishing through the browser adapter. This is a real write action and requires Chrome to already be logged into both `www.zhihu.com` and `zhuanlan.zhihu.com`.
+
+```bash
+# Publish from a file
+opencli zhihu publish --title "My Zhihu Column Title" --file ./article.txt --execute
+
+# Publish inline text
+opencli zhihu publish --title "Release Notes" "Plain-text body content" --execute
+```
+
+For a real browser validation run against the live Zhihu write page:
+
+```bash
+npm run test:zhihu-publish
+```
+
+Required environment variables for that validation script:
+
+```bash
+export OPENCLI_ZHIHU_PUBLISH_TITLE="My Zhihu Column Title"
+export OPENCLI_ZHIHU_PUBLISH_FILE="$PWD/article.txt"
+export OPENCLI_ZHIHU_PUBLISH_CONFIRM=YES
+npm run test:zhihu-publish
+```
+
 ## Output Formats
 
 All built-in commands support `--format` / `-f` with `table` (default), `json`, `yaml`, `md`, and `csv`.

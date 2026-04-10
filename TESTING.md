@@ -128,6 +128,24 @@ npx vitest src/
 - `browser-auth.test.ts` 验证 **graceful failure**，重点是不 crash、不 hang、错误信息可控
 - 如需测试完整登录态，保持 Chrome 登录态并安装 Browser Bridge 扩展，再手动运行对应测试
 
+### 手动真实写入验证
+
+对会产生真实副作用的写命令，不建议放进默认 CI。知乎专栏发布提供了一个显式确认的手动验证脚本：
+
+```bash
+export OPENCLI_ZHIHU_PUBLISH_TITLE="My Zhihu Column Title"
+export OPENCLI_ZHIHU_PUBLISH_FILE="$PWD/article.txt"
+export OPENCLI_ZHIHU_PUBLISH_CONFIRM=YES
+npm run test:zhihu-publish
+```
+
+该脚本会：
+
+- 校验 `dist/src/main.js` 和正文文件存在
+- 默认先执行 `opencli doctor`
+- 运行 `opencli zhihu publish --title ... --file ... --execute -f json`
+- 断言返回结果中包含 `created_target` 和 `created_url`
+
 ---
 
 ## 如何添加新测试

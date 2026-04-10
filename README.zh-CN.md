@@ -303,8 +303,23 @@ opencli zhihu download "https://zhuanlan.zhihu.com/p/xxx" --output ./zhihu
 # 导出并下载图片
 opencli zhihu download "https://zhuanlan.zhihu.com/p/xxx" --download-images
 
+# 发布知乎专栏文章（纯文本正文）
+opencli zhihu publish --title "我的知乎专栏标题" --file ./article.txt --execute
+
+# 也可以直接内联正文
+opencli zhihu publish --title "发布说明" "这里是纯文本正文" --execute
+
 # 导出微信公众号文章为 Markdown
 opencli weixin download --url "https://mp.weixin.qq.com/s/xxx" --output ./weixin
+```
+
+如需对真实知乎写作页做一次端到端验证，可运行：
+
+```bash
+export OPENCLI_ZHIHU_PUBLISH_TITLE="我的知乎专栏标题"
+export OPENCLI_ZHIHU_PUBLISH_FILE="$PWD/article.txt"
+export OPENCLI_ZHIHU_PUBLISH_CONFIRM=YES
+npm run test:zhihu-publish
 ```
 
 

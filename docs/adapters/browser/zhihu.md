@@ -61,6 +61,23 @@ opencli zhihu publish --title "我的知乎专栏标题" --file ./article.txt --
 opencli zhihu hot -f json
 ```
 
+## Live Publish Validation
+
+Use the manual validation script when you want to execute one real publish flow against the live Zhihu write page and verify that the CLI returns a created article target.
+
+```bash
+export OPENCLI_ZHIHU_PUBLISH_TITLE="My Zhihu Column Title"
+export OPENCLI_ZHIHU_PUBLISH_FILE="$PWD/article.txt"
+export OPENCLI_ZHIHU_PUBLISH_CONFIRM=YES
+npm run test:zhihu-publish
+```
+
+Notes:
+
+- This script performs a real publish action.
+- It calls `opencli doctor` first unless `OPENCLI_ZHIHU_PUBLISH_SKIP_DOCTOR=1` is set.
+- It expects a JSON result with `outcome: created`, `target_type: article`, and a `created_url` under `https://zhuanlan.zhihu.com/p/`.
+
 ## Prerequisites
 
 - Chrome running and **logged into** zhihu.com
