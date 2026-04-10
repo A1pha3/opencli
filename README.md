@@ -132,7 +132,7 @@ git clone git@github.com:jackwener/opencli.git && cd opencli && npm install && n
 | **hupu** | `hot` `search` `detail` `mentions` `reply` `like` `unlike` |
 | **twitter** | `trending` `search` `timeline` `bookmarks` `post` `download` `profile` `article` `like` `likes` `notifications` `reply` `reply-dm` `thread` `follow` `unfollow` `followers` `following` `block` `unblock` `bookmark` `unbookmark` `delete` `hide-reply` `accept` |
 | **reddit** | `hot` `frontpage` `popular` `search` `subreddit` `read` `user` `user-posts` `user-comments` `upvote` `upvoted` `save` `saved` `comment` `subscribe` |
-| **zhihu** | `hot` `search` `question` `download` `follow` `like` `favorite` `comment` `answer` |
+| **zhihu** | `hot` `search` `question` `download` `follow` `like` `favorite` `comment` `answer` `publish` |
 | **amazon** | `bestsellers` `search` `product` `offer` `discussion` `movers-shakers` `new-releases` |
 | **1688** | `search` `item` `assets` `download` `store` |
 | **gemini** | `new` `ask` `image` `deep-research` `deep-research-result` |

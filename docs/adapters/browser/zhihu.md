@@ -5,7 +5,7 @@
 ## Commands
 
 | Command | Description |
-|---------|-------------|
+| ------- | ----------- |
 | `opencli zhihu hot` | Read Zhihu hot topics |
 | `opencli zhihu search` | Search Zhihu content |
 | `opencli zhihu question` | Read question answers by question ID |
@@ -15,6 +15,7 @@
 | `opencli zhihu favorite <target> (--collection <name> \| --collection-id <id>) --execute` | Favorite an answer or article into a specific collection |
 | `opencli zhihu comment <target> (<text> \| --file <path>) --execute` | Create a top-level comment when a fresh top-level editor is already present |
 | `opencli zhihu answer <target> (<text> \| --file <path>) --execute` | Create a new answer when a fresh answer editor is already present |
+| `opencli zhihu publish --title <title> (<text> \| --file <path>) --execute` | Publish a plain-text Zhihu column article |
 
 ## Target Formats
 
@@ -32,7 +33,9 @@
 - `comment` currently requires the page to already expose a fresh top-level comment editor
 - `answer` only supports creating a new non-anonymous plain-text answer
 - `answer` currently requires the page to already expose a fresh answer editor
+- `publish` only supports plain-text Zhihu column articles created from a fresh write page
 - `comment` and `answer` also support `--file <path>` for multi-line payloads
+- `publish` also supports `--file <path>` for multi-line article bodies
 - Article targets can live on `zhuanlan.zhihu.com`, while question and answer targets stay on `www.zhihu.com`
 
 ## Usage Examples
@@ -52,6 +55,7 @@ opencli zhihu favorite article:998877 --collection "默认收藏夹" --execute
 opencli zhihu favorite answer:123456:789012 --collection-id fav-b --execute
 opencli zhihu comment answer:123456:789012 --file ./comment.txt --execute
 opencli zhihu answer question:123456 --file ./answer.txt --execute
+opencli zhihu publish --title "我的知乎专栏标题" --file ./article.txt --execute
 
 # JSON output
 opencli zhihu hot -f json
