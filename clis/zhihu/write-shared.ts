@@ -4,8 +4,9 @@ import type { IPage } from '@jackwener/opencli/types';
 
 const RESULT_ROW_RESERVED_KEYS = new Set(['status', 'outcome', 'message', 'target_type', 'target']);
 const NAV_SCOPE_SELECTOR = 'header, nav, [role="banner"], [role="navigation"]';
-const PROFILE_LINK_SELECTOR = 'a[href^="/people/"]';
+const PROFILE_LINK_SELECTOR = 'a[href^="/people/"], a[href*="www.zhihu.com/people/"]';
 const AVATAR_SELECTOR = 'img, [class*="Avatar"], [data-testid*="avatar" i], [aria-label*="头像"]';
+const CURRENT_USER_API_URL = 'https://www.zhihu.com/api/v4/me';
 const SELF_LABEL_TOKENS = ['我', '我的', '个人主页'] as const;
 const EXPLICIT_IDENTITY_META_TOKEN_GROUPS = [
   ['self'],
@@ -24,6 +25,17 @@ type IdentityStateLike = {
   topstory?: { me?: { slug?: unknown } };
   me?: { slug?: unknown };
   initialState?: { me?: { slug?: unknown } };
+};
+
+type IdentityApiPayloadLike = {
+  url_token?: unknown;
+  slug?: unknown;
+  urlToken?: unknown;
+  me?: {
+    url_token?: unknown;
+    slug?: unknown;
+    urlToken?: unknown;
+  };
 };
 
 type FileReaderDeps = {
@@ -87,9 +99,19 @@ function resolveSlugFromState(state: unknown): string | null {
   return typeof slugFromState === 'string' && slugFromState ? slugFromState : null;
 }
 
+function resolveSlugFromApiPayload(payload: unknown): string | null {
+  const slugFromPayload = (payload as IdentityApiPayloadLike | null)?.url_token
+    || (payload as IdentityApiPayloadLike | null)?.slug
+    || (payload as IdentityApiPayloadLike | null)?.urlToken
+    || (payload as IdentityApiPayloadLike | null)?.me?.url_token
+    || (payload as IdentityApiPayloadLike | null)?.me?.slug
+    || (payload as IdentityApiPayloadLike | null)?.me?.urlToken;
+  return typeof slugFromPayload === 'string' && slugFromPayload ? slugFromPayload : null;
+}
+
 function getSlugFromIdentityLink(node: IdentityNodeLike, allowAvatarOnly: boolean): string | null {
   const href = node.getAttribute('href') || '';
-  const match = href.match(/^\/people\/([A-Za-z0-9_-]+)/);
+  const match = href.match(/(?:^\/people\/|zhihu\.com\/people\/)([A-Za-z0-9_-]+)/);
   if (!match) return null;
 
   const aria = node.getAttribute('aria-label') || '';
@@ -174,12 +196,14 @@ export async function resolvePayload(kwargs: Record<string, unknown>, deps: File
 }
 
 function buildResolveCurrentUserIdentityJs(): string {
-  return `(() => {
+  return `(async () => {
     const selfLabelTokens = ${JSON.stringify(SELF_LABEL_TOKENS)};
     const explicitIdentityMetaTokenGroups = ${IN_PAGE_EXPLICIT_IDENTITY_META_TOKEN_GROUPS};
     const navScopeSelector = ${JSON.stringify(NAV_SCOPE_SELECTOR)};
     const profileLinkSelector = ${JSON.stringify(PROFILE_LINK_SELECTOR)};
     const avatarSelector = ${JSON.stringify(AVATAR_SELECTOR)};
+    const currentUserApiUrl = ${JSON.stringify(CURRENT_USER_API_URL)};
+    const profileHrefPattern = new RegExp('(?:^/people/|zhihu\\.com/people/)([A-Za-z0-9_-]+)');
 
     const hasExplicitIdentityLabel = (text) => {
       const normalized = String(text || '').toLowerCase();
@@ -198,9 +222,18 @@ function buildResolveCurrentUserIdentityJs(): string {
       return explicitIdentityMetaTokenGroups.some((group) => group.every((token) => tokens.has(token)));
     };
 
+    const resolveSlugFromApiPayload = (payload) => {
+      if (!payload || typeof payload !== 'object') return null;
+      const slugFromPayload = payload.url_token
+        || payload.slug
+        || payload.urlToken
+        || (payload.me && (payload.me.url_token || payload.me.slug || payload.me.urlToken));
+      return typeof slugFromPayload === 'string' && slugFromPayload ? slugFromPayload : null;
+    };
+
     const getSlugFromIdentityLink = (node, allowAvatarOnly) => {
       const href = node.getAttribute('href') || '';
-      const match = href.match(/^\\/people\\/([A-Za-z0-9_-]+)/);
+      const match = href.match(profileHrefPattern);
       if (!match) return null;
 
       const aria = node.getAttribute('aria-label') || '';
@@ -236,7 +269,17 @@ function buildResolveCurrentUserIdentityJs(): string {
 
     const navScopes = Array.from(document.querySelectorAll(navScopeSelector));
     const slug = findCurrentUserSlugFromRoots(navScopes, true) || findCurrentUserSlugFromRoots([document], false);
-    return slug ? { slug } : null;
+    if (slug) return { slug };
+
+    try {
+      const response = await fetch(currentUserApiUrl, { credentials: 'include' });
+      if (!response.ok) return null;
+      const payload = await response.json();
+      const apiSlug = resolveSlugFromApiPayload(payload);
+      return apiSlug ? { slug: apiSlug } : null;
+    } catch {
+      return null;
+    }
   })()`;
 }
 
@@ -269,5 +312,6 @@ export const __test__ = {
   resolvePayload,
   resolveCurrentUserIdentity,
   resolveCurrentUserSlugFromDom,
+  resolveSlugFromApiPayload,
   buildResultRow,
 };

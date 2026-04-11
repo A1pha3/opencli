@@ -94,6 +94,9 @@ npm install
 npm run build
 npm link      # 链接到全局环境
 opencli list  # 可以在任何地方使用了！
+
+# 通过 npm script 转发 CLI 参数时，要先写 --
+npm run dev -- zhihu publish --title "我的知乎专栏标题" --file ./article.txt --execute
 ```
 
 ### 更新

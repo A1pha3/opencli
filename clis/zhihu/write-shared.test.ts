@@ -30,6 +30,9 @@ class FakeRoot {
   constructor(private readonly selectors: Record<string, QueryableNode[]>) {}
 
   querySelectorAll(selector: string): QueryableNode[] {
+    if (!(selector in this.selectors) && selector === 'a[href^="/people/"], a[href*="www.zhihu.com/people/"]') {
+      return this.selectors['a[href^="/people/"]'] ?? [];
+    }
     return this.selectors[selector] ?? [];
   }
 }
@@ -55,6 +58,53 @@ function createPageForDom(documentRoot: FakeRoot, state: unknown = undefined) {
           window: previousWindow,
           __INITIAL_STATE__: previousState,
         });
+      }
+    }),
+  } as Pick<IPage, 'evaluate'>;
+}
+
+function createPageForDomWithGlobals(
+  documentRoot: FakeRoot,
+  state: unknown,
+  extraGlobals: Record<string, unknown>,
+) {
+  return {
+    evaluate: vi.fn().mockImplementation(async (js: string) => {
+      const previousDocument = (globalThis as { document?: unknown }).document;
+      const previousWindow = (globalThis as { window?: unknown }).window;
+      const previousState = (globalThis as { __INITIAL_STATE__?: unknown }).__INITIAL_STATE__;
+      const previousGlobals = new Map(
+        Object.keys(extraGlobals).map((key) => [
+          key,
+          {
+            existed: Object.prototype.hasOwnProperty.call(globalThis, key),
+            value: (globalThis as Record<string, unknown>)[key],
+          },
+        ]),
+      );
+      const windowObject = { __INITIAL_STATE__: state };
+
+      try {
+        Object.assign(globalThis, {
+          document: documentRoot,
+          window: windowObject,
+          __INITIAL_STATE__: state,
+          ...extraGlobals,
+        });
+        return globalThis.eval(js);
+      } finally {
+        Object.assign(globalThis, {
+          document: previousDocument,
+          window: previousWindow,
+          __INITIAL_STATE__: previousState,
+        });
+        for (const [key, previous] of previousGlobals) {
+          if (previous.existed) {
+            (globalThis as Record<string, unknown>)[key] = previous.value;
+          } else {
+            delete (globalThis as Record<string, unknown>)[key];
+          }
+        }
       }
     }),
   } as Pick<IPage, 'evaluate'>;
@@ -174,23 +224,54 @@ describe('zhihu write shared helpers', () => {
     expect(__test__.resolveCurrentUserSlugFromDom(undefined, documentRoot)).toBeNull();
   });
 
+  it('parses url_token from the current-user API payload', () => {
+    expect(__test__.resolveSlugFromApiPayload({ url_token: 'alice' })).toBe('alice');
+  });
+
+  it('accepts absolute profile links with explicit identity signals', () => {
+    const documentRoot = new FakeRoot({
+      'header, nav, [role="banner"], [role="navigation"]': [],
+      'a[href^="/people/"]': [],
+      'a[href^="/people/"], a[href*="www.zhihu.com/people/"]': [
+        new FakeNode({ href: 'https://www.zhihu.com/people/alice', 'data-testid': 'account-profile-link' }),
+      ],
+    });
+
+    expect(__test__.resolveCurrentUserSlugFromDom(undefined, documentRoot)).toBe('alice');
+  });
+
   it('freezes a stable current-user identity before write', async () => {
     const navRoot = new FakeRoot({
-      'a[href^="/people/"]': [new FakeNode({ href: '/people/alice' }, null, true)],
+      'a[href^="/people/"], a[href*="www.zhihu.com/people/"]': [new FakeNode({ href: '/people/alice' }, null, true)],
     });
     const documentRoot = new FakeRoot({
       'header, nav, [role="banner"], [role="navigation"]': [navRoot],
-      'a[href^="/people/"]': [],
+      'a[href^="/people/"], a[href*="www.zhihu.com/people/"]': [],
     });
     const page = createPageForDom(documentRoot);
 
     await expect(__test__.resolveCurrentUserIdentity(page)).resolves.toBe('alice');
   });
 
+  it('falls back to the current-user API when the write page exposes no identity DOM', async () => {
+    const documentRoot = new FakeRoot({
+      'header, nav, [role="banner"], [role="navigation"]': [],
+      'a[href^="/people/"], a[href*="www.zhihu.com/people/"]': [],
+    });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ url_token: 'deepseek-10' }),
+    });
+    const page = createPageForDomWithGlobals(documentRoot, undefined, { fetch: fetchMock });
+
+    await expect(__test__.resolveCurrentUserIdentity(page)).resolves.toBe('deepseek-10');
+    expect(fetchMock).toHaveBeenCalledWith('https://www.zhihu.com/api/v4/me', { credentials: 'include' });
+  });
+
   it('rejects when current-user identity cannot be resolved', async () => {
     const documentRoot = new FakeRoot({
       'header, nav, [role="banner"], [role="navigation"]': [],
-      'a[href^="/people/"]': [],
+      'a[href^="/people/"], a[href*="www.zhihu.com/people/"]': [],
     });
     const page = createPageForDom(documentRoot);
 

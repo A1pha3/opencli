@@ -60,7 +60,21 @@ npm run dev -- hackernews top --limit 5
 
 # 运行需要浏览器的命令
 npm run dev -- bilibili feed
+
+# 带命名参数的命令也一样，注意 npm run dev 后必须先写 --
+npm run dev -- zhihu publish --title "测试标题" --file ./article.txt --execute
 ```
+
+这里第一个 `--` 是 npm script 的参数分隔符，不是 OpenCLI 自己的参数。
+如果省略它，npm 会把 `--title`、`--file`、`--execute` 这类选项当成 npm 配置项，实际传给源码入口的只剩位置参数，最后通常会报“缺少必填选项”一类的错误。
+
+例如下面这种写法是错误的：
+
+```bash
+npm run dev zhihu publish --title "测试标题" --file ./article.txt --execute
+```
+
+它最终不会把 `--title` 正确传给 OpenCLI。
 
 适用场景：
 
@@ -137,6 +151,7 @@ npm run test:adapter
 - 平时开发看效果，用 `npm run dev -- ...`
 - 提交前验产物，用 `npm run build` 和 `npm start -- ...`
 - 想把本地仓库当全局命令用，再执行 `npm link`
+- 只要是通过 npm script 透传命令参数，都先写分隔符：`npm run dev -- ...`、`npm start -- ...`
 
 ## 添加新适配器
 
@@ -376,6 +391,7 @@ opencli validate           # YAML 验证
 # 开发模式运行源码
 npm run dev -- --help
 npm run dev -- hackernews top --limit 5
+npm run dev -- zhihu publish --title "测试标题" --file ./article.txt --execute
 
 # 编译
 npm run build

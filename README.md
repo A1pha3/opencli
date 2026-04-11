@@ -106,6 +106,9 @@ npx skills add jackwener/opencli --skill opencli-oneshot     # Quick command ref
 
 ```bash
 git clone git@github.com:jackwener/opencli.git && cd opencli && npm install && npm run build && npm link
+
+# When forwarding CLI flags through npm scripts, insert -- before OpenCLI args
+npm run dev -- zhihu publish --title "My Zhihu Column Title" --file ./article.txt --execute
 ```
 
 **Load Source Browser Bridge Extension**
@@ -210,9 +213,12 @@ opencli 1688 download 841141931191 --output ./1688-downloads
 
 Zhihu now supports plain-text column publishing through the browser adapter. This is a real write action and requires Chrome to already be logged into both `www.zhihu.com` and `zhuanlan.zhihu.com`.
 
+If you run from source with `npm run dev`, add `--` before the OpenCLI arguments so npm forwards flags like `--title` and `--file` to the CLI.
+
 ```bash
 # Publish from a file
 opencli zhihu publish --title "My Zhihu Column Title" --file ./article.txt --execute
+npm run dev -- zhihu publish --title "My Zhihu Column Title" --file ./article.txt --execute
 
 # Publish inline text
 opencli zhihu publish --title "Release Notes" "Plain-text body content" --execute
